@@ -222,6 +222,8 @@ const client = new Client({
 client.initialize();
 
 // Configuração do Socket.IO para comunicação em tempo real
+let authenticated = false;
+
 io.on('connection', function (socket) {
     socket.emit('message', 'Conectando...');
 
@@ -422,61 +424,13 @@ io.on('connection', function (socket) {
         });
 
     });
-
-    const fs = require('fs');
-
-    // Função para verificar se o cliente já está autenticado
-    function checkAuthentication() {
-        return new Promise((resolve, reject) => {
-            fs.readFile('auth_indicator.txt', 'utf8', (err, data) => {
-                if (err) {
-                    // O arquivo de indicador de autenticação não existe ou não pode ser lido
-                    resolve(false);
-                } else {
-                    // O arquivo de indicador de autenticação existe
-                    resolve(true);
-                }
-            });
-        });
-    }
-
-    // Função para verificar se o cliente já está autenticado
-    function checkAuthentication() {
-        return new Promise((resolve, reject) => {
-            fs.readFile('auth_indicator.txt', 'utf8', (err, data) => {
-                if (err) {
-                    // O arquivo de indicador de autenticação não existe ou não pode ser lido
-                    resolve(false);
-                } else {
-                    // O arquivo de indicador de autenticação existe
-                    resolve(true);
-                }
-            });
-        });
-    }
-
     // Evento disparado quando o cliente é autenticado com sucesso
-    client.on('authenticated', async () => {
-        const authenticated = await checkAuthentication();
-
+    client.on('authenticated', () => {
         if (!authenticated) {
-            // Cliente autenticado pela primeira vez, salvar o indicador de autenticação
-            fs.writeFile('auth_indicator.txt', 'authenticated', err => {
-                if (err) {
-                    console.error('Erro ao salvar o indicador de autenticação:', err);
-                } else {
-                    console.log('Indicador de autenticação salvo com sucesso');
-                }
-            });
-
-            isClientAuthenticated = true;
-
+            authenticated = true;
             socket.emit('authenticated', 'BOT-ZDG Autenticado!');
             socket.emit('message', 'BOT-ZDG Autenticado!');
             console.log('BOT-ZDG Autenticado');
-        } else {
-            isClientAuthenticated = true;
-            console.log('O cliente já está autenticado');
         }
     });
 
@@ -496,29 +450,10 @@ io.on('connection', function (socket) {
         socket.emit('message', 'BOT-ZDG Cliente desconectado!');
         console.log('BOT-ZDG Cliente desconectado', reason);
         client.initialize();
-        isClientAuthenticated = false;
     });
+});
 
-    // Configuração do socket.io
-    io.on('connection', function (socket) {
-        console.log('Nova conexão:', socket.id);
-
-        // Evento disparado quando o cliente é autenticado com sucesso
-        socket.on('authenticate', async () => {
-            if (isClientAuthenticated) {
-                console.log('O cliente já está autenticado');
-                socket.emit('authenticated', 'BOT-ZDG Autenticado!');
-                socket.emit('message', 'BOT-ZDG Autenticado!');
-            } else {
-                console.log('Autenticando o cliente...');
-                client.initialize();
-            }
-        });
-
-        // Resto do código do socket.io...
-    });
-
-    // Inicialização do servidor
-    server.listen(port, function () {
-        console.log('BOT-ZDG rodando na porta *:' + port);
-    });
+// Inicialização do servidor
+server.listen(port, function () {
+    console.log('BOT-ZDG rodando na porta *:' + port);
+});
